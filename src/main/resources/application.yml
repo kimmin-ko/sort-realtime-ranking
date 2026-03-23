@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: sort-realtime-ranking
+  data:
+    redis:
+      host: localhost
+      port: 6379
