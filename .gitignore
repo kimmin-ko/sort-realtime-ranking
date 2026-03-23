@@ -35,3 +35,10 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Tech Spec ###
+techspec_*.md
+
+### AI Agent ###
+.claude
+.omc
