@@ -5,9 +5,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
@@ -15,7 +14,7 @@ public class SseEmitterManager {
 
     private static final long SSE_TIMEOUT = 60 * 60 * 1000L; // 1시간
 
-    private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
+    private final Set<SseEmitter> emitters = ConcurrentHashMap.newKeySet(); // O(1) add/remove
 
     /**
      * SseEmitter를 생성만 하고 브로드캐스트 리스트에는 등록하지 않는다.
@@ -43,19 +42,15 @@ public class SseEmitterManager {
      * 모든 SSE 클라이언트에 데이터를 브로드캐스트한다.
      */
     public void broadcast(String eventName, Object data) {
-        List<SseEmitter> deadEmitters = new ArrayList<>();
-
         for (SseEmitter emitter : emitters) {
             try {
                 emitter.send(SseEmitter.event()
                         .name(eventName)
                         .data(data));
             } catch (IOException e) {
-                deadEmitters.add(emitter);
+                emitters.remove(emitter); // 전송 실패한 emitter 즉시 제거
             }
         }
-
-        emitters.removeAll(deadEmitters);
     }
 
     /**
