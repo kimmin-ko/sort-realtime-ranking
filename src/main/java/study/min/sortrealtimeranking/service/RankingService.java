@@ -1,6 +1,7 @@
 package study.min.sortrealtimeranking.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
@@ -14,6 +15,7 @@ import study.min.sortrealtimeranking.event.RankingEventPublisher;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RankingService {
@@ -47,7 +49,7 @@ public class RankingService {
 
         UserRankingResponse response = new UserRankingResponse(userId, nickname, totalScore, rank + 1);
 
-        // score 변경 이벤트를 Pub/Sub으로 전파
+        // score 변경 이벤트를 비동기로 Pub/Sub 전파
         eventPublisher.publish(new RankingUpdateMessage(userId, nickname, totalScore, rank + 1));
 
         return response;
@@ -155,10 +157,6 @@ public class RankingService {
     private static long scoreOf(TypedTuple<String> tuple) {
         Double score = tuple.getScore();
         return score != null ? score.longValue() : 0L;
-    }
-
-    private static String decodeNickname(byte[] bytes) {
-        return bytes != null ? new String(bytes, StandardCharsets.UTF_8) : null;
     }
 
     private static byte[] toBytes(String value) {
