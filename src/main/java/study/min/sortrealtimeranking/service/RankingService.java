@@ -7,7 +7,9 @@ import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.stereotype.Service;
 import study.min.sortrealtimeranking.dto.NearbyRankingResponse;
 import study.min.sortrealtimeranking.dto.RankingListResponse;
+import study.min.sortrealtimeranking.dto.RankingUpdateMessage;
 import study.min.sortrealtimeranking.dto.UserRankingResponse;
+import study.min.sortrealtimeranking.event.RankingEventPublisher;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -20,6 +22,7 @@ public class RankingService {
     private static final String NICKNAME_KEY = "ranking:nickname";
 
     private final StringRedisTemplate redisTemplate;
+    private final RankingEventPublisher eventPublisher;
 
     // ==================== Public API ====================
 
@@ -42,7 +45,12 @@ public class RankingService {
         long totalScore = ((Double) results.get(0)).longValue();
         long rank = (Long) results.get(2);
 
-        return new UserRankingResponse(userId, nickname, totalScore, rank + 1);
+        UserRankingResponse response = new UserRankingResponse(userId, nickname, totalScore, rank + 1);
+
+        // score 변경 이벤트를 Pub/Sub으로 전파
+        eventPublisher.publish(new RankingUpdateMessage(userId, nickname, totalScore, rank + 1));
+
+        return response;
     }
 
     /**
