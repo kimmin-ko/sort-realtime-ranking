@@ -55,11 +55,12 @@ public class RankingController {
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamRankings() {
-        SseEmitter emitter = sseEmitterManager.register();
+        SseEmitter emitter = sseEmitterManager.create();
 
-        // 연결 시 현재 상위 랭킹을 초기 데이터로 전송
-        RankingListResponse initialData = rankingService.getTopRankings(10);
+        // 초기 데이터를 먼저 전송한 후 브로드캐스트 리스트에 등록 (순서 보장)
+        RankingListResponse initialData = rankingService.getTopRankings(100);
         sseEmitterManager.sendTo(emitter, "ranking", initialData);
+        sseEmitterManager.activate(emitter);
 
         return emitter;
     }
