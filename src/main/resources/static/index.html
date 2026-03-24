@@ -15,17 +15,6 @@
         .status.disconnected .dot { background: #ef4444; }
         .status.connecting .dot { background: #f59e0b; }
 
-        .form-card { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .form-card h2 { font-size: 0.95rem; margin-bottom: 12px; }
-        .form-row { display: flex; gap: 8px; flex-wrap: wrap; }
-        .form-row input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
-        .form-row input[type="number"] { max-width: 80px; }
-        .form-row button { padding: 8px 16px; background: #3b82f6; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; white-space: nowrap; }
-        .form-row button:hover { background: #2563eb; }
-        .form-row button:disabled { background: #94a3b8; cursor: not-allowed; }
-        .message { margin-top: 8px; font-size: 0.8rem; color: #64748b; }
-        .message.error { color: #ef4444; }
-
         table { width: 100%; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-collapse: collapse; }
         thead { background: #f8fafc; }
         th, td { padding: 10px 14px; text-align: left; font-size: 0.9rem; }
@@ -45,18 +34,6 @@
         <span class="dot"></span><span id="statusText">연결 중...</span>
     </div>
 
-    <div class="form-card">
-        <h2>점수 추가</h2>
-        <form id="scoreForm">
-            <div class="form-row">
-                <input type="text" id="nickname" placeholder="닉네임" required>
-                <input type="number" id="score" placeholder="점수" min="1" value="10" required>
-                <button type="submit">전송</button>
-            </div>
-        </form>
-        <div id="formMessage" class="message"></div>
-    </div>
-
     <table>
         <thead>
             <tr><th>순위</th><th>닉네임</th><th class="score-cell">점수</th></tr>
@@ -70,15 +47,6 @@
         const statusEl = document.getElementById('status');
         const statusText = document.getElementById('statusText');
         const rankingBody = document.getElementById('rankingBody');
-        const scoreForm = document.getElementById('scoreForm');
-        const formMessage = document.getElementById('formMessage');
-
-        // 사용자별 고정 UUID (브라우저 세션 단위)
-        let myUserId = sessionStorage.getItem('userId');
-        if (!myUserId) {
-            myUserId = crypto.randomUUID();
-            sessionStorage.setItem('userId', myUserId);
-        }
 
         // --- SSE ---
         function connectSSE() {
@@ -121,35 +89,6 @@
             d.textContent = str;
             return d.innerHTML;
         }
-
-        // --- 점수 증가 ---
-        scoreForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const nickname = document.getElementById('nickname').value.trim();
-            const score = parseInt(document.getElementById('score').value, 10);
-            if (!nickname || !score) return;
-
-            const btn = scoreForm.querySelector('button');
-            btn.disabled = true;
-            formMessage.textContent = '';
-            formMessage.className = 'message';
-
-            try {
-                const res = await fetch('/api/rankings/score', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: myUserId, nickname, score })
-                });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const data = await res.json();
-                formMessage.textContent = `${data.nickname} — ${data.score.toLocaleString()}점 (${data.rank}위)`;
-            } catch (err) {
-                formMessage.textContent = '전송 실패: ' + err.message;
-                formMessage.className = 'message error';
-            } finally {
-                btn.disabled = false;
-            }
-        });
 
         connectSSE();
     </script>
