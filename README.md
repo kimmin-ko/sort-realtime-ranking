@@ -101,95 +101,15 @@ Pub/Sub의 핵심은 **서버A에서 발생한 score 변경이 서버B에 연결
 서버B 대시보드: 실시간 갱신 ✓  ← Pub/Sub 덕분에 가능
 ```
 
-### curl로 테스트
-
-대시보드 대신 curl로 직접 요청해도 됩니다:
-
-```bash
-# 서버A(8080)에 점수 추가 → 서버B(8081) 대시보드에서 실시간 반영 확인
-curl -X POST http://localhost:8080/api/rankings/score \
-  -H "Content-Type: application/json" \
-  -d '{"userId": "550e8400-e29b-41d4-a716-446655440000", "nickname": "alice", "score": 100}'
-```
-
 ## API
 
-### 1. Score 증가
-
-```bash
-curl -X POST http://localhost:8080/api/rankings/score \
-  -H "Content-Type: application/json" \
-  -d '{"userId": "550e8400-e29b-41d4-a716-446655440000", "nickname": "player1", "score": 10}'
-```
-
-```json
-{
-  "userId": "550e8400-e29b-41d4-a716-446655440000",
-  "nickname": "player1",
-  "score": 10,
-  "rank": 1
-}
-```
-
-### 2. 상위 N명 랭킹 조회
-
-```bash
-curl http://localhost:8080/api/rankings/top?size=10
-```
-
-```json
-{
-  "rankings": [
-    { "userId": "...", "nickname": "player1", "score": 100, "rank": 1 },
-    { "userId": "...", "nickname": "player2", "score": 80, "rank": 2 }
-  ]
-}
-```
-
-### 3. 특정 사용자 랭킹 조회
-
-```bash
-curl http://localhost:8080/api/rankings/users/550e8400-e29b-41d4-a716-446655440000
-```
-
-```json
-{
-  "userId": "550e8400-e29b-41d4-a716-446655440000",
-  "nickname": "player1",
-  "score": 100,
-  "rank": 1
-}
-```
-
-### 4. 주변 랭킹 조회 (앞뒤 N명)
-
-```bash
-curl http://localhost:8080/api/rankings/users/550e8400-e29b-41d4-a716-446655440000/nearby?range=10
-```
-
-```json
-{
-  "targetUser": { "userId": "...", "nickname": "player1", "score": 100, "rank": 50 },
-  "rankings": [
-    { "userId": "...", "nickname": "player40", "score": 110, "rank": 40 },
-    { "userId": "...", "nickname": "player1", "score": 100, "rank": 50 },
-    { "userId": "...", "nickname": "player60", "score": 90, "rank": 60 }
-  ]
-}
-```
-
-### 5. SSE 실시간 스트림
-
-```bash
-curl -N http://localhost:8080/api/rankings/stream
-```
-
-연결 후 score가 변경될 때마다 이벤트가 수신됩니다:
-
-```
-event: ranking
-data: {"rankings":[{"userId":"...","nickname":"alice","score":300,"rank":1}, ...]}
-```
+| 메서드 | 엔드포인트 | 설명 |
+|--------|-----------|------|
+| `POST` | `/api/rankings/score` | score 증가 (`{ userId, nickname, score }`) |
+| `GET` | `/api/rankings/top?size=10` | 상위 N명 랭킹 조회 |
+| `GET` | `/api/rankings/users/{userId}` | 특정 사용자 랭킹 조회 |
+| `GET` | `/api/rankings/users/{userId}/nearby?range=10` | 주변 랭킹 조회 |
+| `GET` | `/api/rankings/stream` | SSE 실시간 랭킹 스트림 |
 
 ## 환경 변수
 
