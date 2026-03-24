@@ -81,7 +81,7 @@ public class RankingService {
             return null;
         }
 
-        String nickname = decodeNickname((byte[]) results.get(2));
+        String nickname = (String) results.get(2);
         return new UserRankingResponse(userId, nickname, score.longValue(), rank + 1);
     }
 
