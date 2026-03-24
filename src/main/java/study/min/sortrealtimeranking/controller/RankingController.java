@@ -2,10 +2,13 @@ package study.min.sortrealtimeranking.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import study.min.sortrealtimeranking.dto.*;
 import study.min.sortrealtimeranking.service.RankingService;
+import study.min.sortrealtimeranking.sse.SseEmitterManager;
 
 import java.util.UUID;
 
@@ -15,6 +18,7 @@ import java.util.UUID;
 public class RankingController {
 
     private final RankingService rankingService;
+    private final SseEmitterManager sseEmitterManager;
 
     @PostMapping("/score")
     public ResponseEntity<UserRankingResponse> increaseScore(@Valid @RequestBody ScoreUpdateRequest request) {
@@ -47,5 +51,16 @@ public class RankingController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamRankings() {
+        SseEmitter emitter = sseEmitterManager.register();
+
+        // 연결 시 현재 상위 랭킹을 초기 데이터로 전송
+        RankingListResponse initialData = rankingService.getTopRankings(10);
+        sseEmitterManager.sendTo(emitter, "ranking", initialData);
+
+        return emitter;
     }
 }
