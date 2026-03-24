@@ -8,7 +8,6 @@ import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.stereotype.Service;
 import study.min.sortrealtimeranking.dto.NearbyRankingResponse;
 import study.min.sortrealtimeranking.dto.RankingListResponse;
-import study.min.sortrealtimeranking.dto.RankingUpdateMessage;
 import study.min.sortrealtimeranking.dto.UserRankingResponse;
 import study.min.sortrealtimeranking.event.RankingEventPublisher;
 
@@ -50,7 +49,7 @@ public class RankingService {
         UserRankingResponse response = new UserRankingResponse(userId, nickname, totalScore, rank + 1);
 
         // score 변경 이벤트를 비동기로 Pub/Sub 전파
-        eventPublisher.publish(new RankingUpdateMessage(userId, nickname, totalScore, rank + 1));
+        eventPublisher.publish(userId);
 
         return response;
     }
